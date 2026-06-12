@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbital Data Centre — Viability Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --paper:#FFF1E5; --panel:#FCE9D8; --panel2:#F8E2CC; --ink:#26211C; --slate:#66605C;
+  --teal:#0D7680; --claret:#990F3D; --oxford:#0F5499; --wheat:#9A6A28; --rule:#E0CDBA;
+  --win:#0D7680; --lose:#990F3D;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',-apple-system,Segoe UI,sans-serif;font-size:14px;line-height:1.45}
+.wrap{max-width:1240px;margin:0 auto;padding:18px 20px 60px}
+.serif{font-family:'Source Serif 4',Georgia,serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace}
+.dotrule{border:none;border-top:2px dotted var(--ink);opacity:.55;margin:10px 0 16px}
+.dotrule.thin{border-top:1px dotted var(--slate);opacity:.5}
+
+/* Masthead */
+header .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate)}
+header h1{font-family:'Source Serif 4',Georgia,serif;font-weight:700;font-size:clamp(26px,4.4vw,40px);line-height:1.06;margin:6px 0 4px}
+header .standfirst{color:var(--slate);max-width:760px;font-size:14.5px}
+
+/* Scenario chips */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 6px}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:12.5px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:7px 13px;cursor:pointer;border-radius:2px}
+.chip:hover{background:var(--panel)}
+.chip.active{background:var(--ink);color:var(--paper)}
+.chip:focus-visible,.toggle input:focus-visible+.tslider,input[type=range]:focus-visible{outline:2px solid var(--oxford);outline-offset:2px}
+
+/* Verdict banner */
+.verdict{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;padding:14px 16px;border:2px solid var(--ink);background:var(--panel);margin:12px 0 14px}
+.verdict .ratio{font-family:'Source Serif 4',Georgia,serif;font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1}
+.verdict .vtext{font-size:13.5px;max-width:640px;color:var(--ink)}
+.verdict .vtag{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;color:var(--paper)}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 18px}
+.kpi{border-top:3px solid var(--ink);padding:8px 2px 2px}
+.kpi .lab{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
+.kpi .val{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600;margin-top:2px}
+.kpi .sub{font-size:11px;color:var(--slate)}
+.kpi.teal{border-top-color:var(--teal)} .kpi.claret{border-top-color:var(--claret)} .kpi.oxford{border-top-color:var(--oxford)}
+
+/* Layout grid */
+.grid{display:grid;grid-template-columns:330px 1fr;gap:26px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+
+/* Assumptions rail */
+.rail h2{font-family:'Source Serif 4',Georgia,serif;font-size:18px;margin-bottom:6px}
+details{border-top:1px dotted var(--slate);padding:8px 0}
+details:last-of-type{border-bottom:1px dotted var(--slate)}
+summary{cursor:pointer;font-weight:600;font-size:13px;letter-spacing:.02em;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::after{content:"+";font-family:'IBM Plex Mono',monospace;color:var(--slate)}
+details[open] summary::after{content:"–"}
+.ctl{margin:10px 0 4px}
+.ctl .row{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px}
+.ctl .row b{font-weight:500}
+.ctl .row .v{font-family:'IBM Plex Mono',monospace;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--teal);height:20px;background:transparent}
+.note{font-size:11px;color:var(--slate);margin-top:2px}
+.toggle{display:flex;align-items:center;gap:10px;margin:14px 0;padding:10px;border:1.5px dashed var(--wheat);background:var(--panel2)}
+.toggle label{font-size:12.5px;cursor:pointer}
+.toggle b{color:var(--claret)}
+
+/* Cards / charts */
+.card{border:1.5px solid var(--ink);background:#FFF7EE;padding:14px 14px 10px;margin-bottom:20px}
+.card h3{font-family:'Source Serif 4',Georgia,serif;font-size:17px;margin-bottom:2px}
+.card .cap{font-size:12px;color:var(--slate);margin-bottom:8px}
+.chartbox{position:relative;height:280px}
+.chartbox.tall{height:300px}.chartbox.short{height:210px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:820px){.split{grid-template-columns:1fr}}
+.bequote{font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:6px;color:var(--ink)}
+.bequote b{color:var(--claret)}
+
+/* Station SVG */
+#stationSvg{width:100%;height:auto;display:block;background:
+ repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(38,33,28,.05) 40px),
+ repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(38,33,28,.05) 40px),#FFF7EE}
+.legendline{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--slate);margin-top:6px}
+.sw{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+
+/* Scale-up strip */
+.scaleup{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end}
+.scaleup .big{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600}
+.scaleup .lab{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
+.gwin{display:flex;align-items:baseline;gap:8px}
+.gwin input{font-family:'IBM Plex Mono',monospace;font-size:20px;width:84px;border:none;border-bottom:2px solid var(--ink);background:transparent;color:var(--ink);padding:2px 4px}
+
+footer{margin-top:26px;font-size:11.5px;color:var(--slate)}
+footer .src{border-top:1px solid var(--ink);padding-top:8px;margin-top:8px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Space Systems · Interactive Model · June 2026</div>
+  <h1>Can a data centre in orbit pay for itself?</h1>
+  <p class="standfirst">A coupled power–thermal–mass–launch–economics model of a dusk‑dawn sun‑synchronous orbital data centre, benchmarked against identical silicon on the ground. Move the assumptions; the physics and the P&amp;L respond together. <b>v2:</b> recalibrated against the SemiAnalysis <i>AI Space Datacenter TCO Model</i> (Jun ’26) — eclipse + battery, split WACCs, 5‑vs‑15‑year life mismatch, and a preset that reproduces their published 2026 numbers within ~2%.</p>
+</header>
+<hr class="dotrule">
+
+<div class="chips" role="tablist" aria-label="Scenario presets">
+  <button class="chip active" data-sc="0">Today · 2026 Falcon‑class</button>
+  <button class="chip" data-sc="1">Early Starship · ~2028‑30</button>
+  <button class="chip" data-sc="2">Mature Starship · ~2033‑35</button>
+  <button class="chip" data-sc="3">SemiAnalysis · 2026 repro</button>
+  <button class="chip" data-sc="-1" id="customChip" disabled style="opacity:.45;cursor:default">Custom</button>
+</div>
+
+<div class="verdict">
+  <div class="ratio mono" id="vRatio">—</div>
+  <div>
+    <span class="vtag" id="vTag" style="background:var(--claret)">—</span>
+    <p class="vtext" id="vText"></p>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="lab">Dry mass</div><div class="val" id="kMass">—</div><div class="sub">t per MW IT</div></div>
+  <div class="kpi teal"><div class="lab">Capex · space</div><div class="val" id="kCapS">—</div><div class="sub">$M per MW IT</div></div>
+  <div class="kpi claret"><div class="lab">Capex · ground</div><div class="val" id="kCapG">—</div><div class="sub">$M per MW IT</div></div>
+  <div class="kpi teal"><div class="lab">LCOC · space</div><div class="val" id="kLcS">—</div><div class="sub">$ / IT‑kW‑hour</div></div>
+  <div class="kpi claret"><div class="lab">LCOC · ground</div><div class="val" id="kLcG">—</div><div class="sub">$ / IT‑kW‑hour</div></div>
+  <div class="kpi oxford"><div class="lab">Breakeven launch</div><div class="val" id="kBE">—</div><div class="sub" id="kBEsub">$ / kg to SSO</div></div>
+  <div class="kpi"><div class="lab">$ / GPU‑hr · B300</div><div class="val" id="kGpu" style="font-size:17px">—</div><div class="sub">space / ground, SA convention</div></div>
+</div>
+<p class="cap" style="margin:-8px 0 18px;font-size:11.5px;color:var(--slate)">Anchors — SemiAnalysis TCO model, Jun ’26: 2026 B300 = <b class="mono">$10.91 vs $2.49</b>/GPU‑hr (4.4×); ISS rejects 70 kW from 325 m² at $340–500M; parity <b>~2040</b> base case, <b>early‑2030s</b> in their terrestrial‑constrained “Elon Musk” case.</p>
+
+<div class="grid">
+  <!-- ===================== Assumptions rail ===================== -->
+  <aside class="rail">
+    <h2>Assumptions</h2>
+    <p class="note" style="margin-bottom:8px">Grouped by subsystem. Presets above reset every slider; touching any slider switches to <span class="mono">Custom</span>.</p>
+    <div id="controls"></div>
+
+    <div class="toggle">
+      <input type="checkbox" id="scarcity">
+      <label for="scarcity"><b>Power‑scarcity mode</b> — ground waits <span id="gdel" class="mono">3.0</span> yr in the interconnect queue; orbit deploys in <span id="sdel" class="mono">1.0</span> yr. Applies to NPV only.</label>
+    </div>
+
+    <div class="kpi" style="border-top-color:var(--teal)"><div class="lab">NPV · space</div><div class="val" id="kNpvS">—</div><div class="sub">$M per MW over life</div></div>
+    <div class="kpi" style="border-top-color:var(--claret);margin-top:8px"><div class="lab">NPV · ground</div><div class="val" id="kNpvG">—</div><div class="sub">$M per MW over life</div></div>
+  </aside>
+
+  <!-- ===================== Main canvas ===================== -->
+  <main>
+    <div class="card">
+      <h3>The machine, to scale</h3>
+      <div class="cap">Plan view of one 1 MW node as your sliders define it — solar wings sized for end‑of‑life power, radiator cross sized by the T⁴ law. A football pitch (105 × 68 m) for scale.</div>
+      <svg id="stationSvg" viewBox="0 0 760 300" role="img" aria-label="To-scale plan view of the orbital data centre node"></svg>
+      <div class="legendline">
+        <span><span class="sw" style="background:#0D7680"></span>Solar array <span class="mono" id="lArr"></span></span>
+        <span><span class="sw" style="background:#990F3D"></span>Radiators <span class="mono" id="lRad"></span></span>
+        <span><span class="sw" style="background:#26211C"></span>Server core</span>
+        <span><span class="sw" style="background:none;border:1.5px dashed #66605C"></span>Football pitch 105 m</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Where the curves cross</h3>
+      <div class="cap">Space LCOC vs launch price (log scale), against the terrestrial benchmark. The dot is your current launch price.</div>
+      <div class="chartbox tall"><canvas id="chCurve"></canvas></div>
+      <div class="bequote" id="beNote"></div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <h3>Capex anatomy</h3>
+        <div class="cap">$M per MW of sellable IT.</div>
+        <div class="chartbox short"><canvas id="chCapex"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>What you launch</h3>
+        <div class="cap">Dry mass per MW, by subsystem.</div>
+        <div class="chartbox short"><canvas id="chMass"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>What moves the answer</h3>
+      <div class="cap">One‑at‑a‑time tornado on the space/ground LCOC ratio, around your current settings. Dashed line = parity.</div>
+      <div class="chartbox"><canvas id="chTorn"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>Scaling to a gigawatt campus</h3>
+      <div class="cap">Logistics for a constellation at your current mass budget — Starship V3 ≈ 150 t usable to SSO.</div>
+      <div class="scaleup">
+        <div class="gwin"><input id="gwTarget" class="mono" type="number" value="5" min="0.1" step="0.5" inputmode="decimal" aria-label="Constellation size in gigawatts"><span class="lab" style="font-size:16px">GW</span></div>
+        <div><div class="big" id="suMass">—</div><div class="lab">tonnes to orbit</div></div>
+        <div><div class="big" id="suFlights">—</div><div class="lab">Starship flights</div></div>
+        <div><div class="big" id="suRepl">—</div><div class="lab">flights / yr replacement</div></div>
+        <div><div class="big" id="suArea">—</div><div class="lab">km² solar array</div></div>
+      </div>
+    </div>
+
+    <footer>
+      <p><b>Reading guide.</b> LCOC = levelised cost of compute: monthly‑annuity capital charges (station over its own life at the space WACC; ground IT over 5 yr and the building over its facility life at the ground WACC) plus opex, ÷ IT‑kW‑hours sold. The $/GPU‑hr card uses SemiAnalysis’s wall‑clock convention for direct comparison. Revenue per kW‑h erodes ~15 %/yr (slower than per‑GPU pricing, since chip power density rises). “Platform‑bound” means even free launch cannot reach parity — a station amortised over ~5 years at a 15% WACC loses to a building amortised over 15 years at 10.3% before the rocket is priced; this holds even under SemiAnalysis’s own 2026 inputs. Counterintuitively, <i>cheaper AI silicon worsens the space case</i>: it shrinks the shared IT capex while the orbital premium stays fixed.</p>
+      <p class="src">Model: coupled power–thermal–mass–launch–economics, calibrated against Starcloud‑1 flight data (H100, Nov 2025), the Starcloud whitepaper (5 GW ⇒ 16 km² array — this model independently reproduces 16.4 km²), Google Project Suncatcher radiation &amp; cost analysis (&lt;$200/kg parity claim), ISS power/thermal records, and June 2026 launch pricing. Sources: Starcloud; Google Research; SpaceX; FT research; SemiAnalysis “To Boldly Go: The Case for Space Datacenters” &amp; AI Space Datacenter TCO Model (Nishball, Myana, Holbrook et al., 3 Jun 2026 — eclipse/battery physics, WACC &amp; life-mismatch structure, F9 $1.4–1.8k/kg, 2026 B300 anchors, five-layer terrestrial supply stack, parity ~2040 base / early-2030s Musk case). Built for Ferhat, June 2026; v2 12 Jun.</p>
+    </footer>
+  </main>
+</div>
+</div>
+
+<script>
+"use strict";
+/* ============ MODEL (1:1 port of the Python engine) ============ */
+const SIGMA=5.670374419e-8, SOLAR=1361.0;
+
+const COMMON={T_sink:230,packing:0.85,pointing:0.97,emiss:0.90,fin:0.90,batt_rt:0.93,it_life:5,rev_dec:0.15,util:0.90,g_pue:1.35,g_elec:87,g_fac:12,g_fac_life:15,g_ops:1.0,g_overprov:0.05,g_ovh:0.01,g_avail:1.0,wacc_g:0.103,g_delay:3.0};
+const PRESETS=[
+ {...COMMON,name:"Today (2026, Falcon-class)",ecl_min:35,cell_eff:0.30,degr:0.02,sp_array:110,array_cost_W:30,overhead:0.08,batt_whkg:160,batt_kwh_cost:600,batt_dod:0.80,T_rad:320,rad_kg_m2:6.0,rad_cost_m2:3000,it_kg_kW:13,it_cost_W:32,shield_t_MW:1.8,overprov:0.20,c_ovh:0.05,rad_avail:0.95,struct:0.18,avionics_M:7,integ_M:10,ins:0.07,ops_M:1.5,life:5,launch:1600,rev0:3.0,wacc_s:0.150,s_delay:1.0},
+ {...COMMON,name:"Early Starship (~2028-30)",ecl_min:35,cell_eff:0.32,degr:0.015,sp_array:180,array_cost_W:12,overhead:0.07,batt_whkg:200,batt_kwh_cost:300,batt_dod:0.80,T_rad:325,rad_kg_m2:4.0,rad_cost_m2:1500,it_kg_kW:11,it_cost_W:28,shield_t_MW:1.5,overprov:0.15,c_ovh:0.04,rad_avail:0.96,struct:0.15,avionics_M:5,integ_M:6,ins:0.06,ops_M:1.0,life:5,launch:700,rev0:2.4,wacc_s:0.125,s_delay:0.75},
+ {...COMMON,name:"Mature Starship (~2033-35)",ecl_min:35,cell_eff:0.34,degr:0.01,sp_array:350,array_cost_W:4,overhead:0.06,batt_whkg:260,batt_kwh_cost:150,batt_dod:0.85,T_rad:330,rad_kg_m2:2.5,rad_cost_m2:600,it_kg_kW:8,it_cost_W:24,shield_t_MW:1.0,overprov:0.10,c_ovh:0.03,rad_avail:0.98,struct:0.12,avionics_M:3,integ_M:3,ins:0.04,ops_M:0.6,life:8,launch:250,rev0:2.0,wacc_s:0.103,s_delay:0.5},
+ {...COMMON,name:"SemiAnalysis 2026 (B300 repro)",ecl_min:35,cell_eff:0.30,degr:0.02,sp_array:150,array_cost_W:22,overhead:0.06,batt_whkg:200,batt_kwh_cost:300,batt_dod:0.80,T_rad:322,rad_kg_m2:3.5,rad_cost_m2:1100,it_kg_kW:11,it_cost_W:32.3,shield_t_MW:1.0,overprov:0.20,c_ovh:0.0,rad_avail:0.95,struct:0.14,avionics_M:4.5,integ_M:8,ins:0.06,ops_M:1.65,life:5,launch:1600,rev0:3.0,wacc_s:0.150,s_delay:1.0,util:0.80,g_ops:0.15,g_overprov:0.0,g_ovh:0.048},
+];
+let p = {...PRESETS[0]};
+
+function physMass(p,MW=1){
+  const sell=1000*MW, gross=sell*(1+p.overprov), bus=gross*(1+p.overhead);
+  const ecl=p.ecl_min/1440, sunlit=1-ecl;
+  const E_batt=bus*(p.ecl_min/60)/p.batt_dod;            // kWh ride-through
+  const M_batt=E_batt*1000/p.batt_whkg, C_batt=E_batt*p.batt_kwh_cost/1e6;
+  const daily=(sunlit+ecl/p.batt_rt)/sunlit;             // recharge oversize
+  const eol=Math.pow(1-p.degr,p.life);
+  const arrBOL=bus*daily/(eol*p.pointing);
+  const A_arr=arrBOL*1000/(SOLAR*p.cell_eff*p.packing);
+  const M_arr=arrBOL*1000/p.sp_array, C_arr=arrBOL*1000*p.array_cost_W/1e6;
+  const Q=bus;
+  const q=p.emiss*p.fin*SIGMA*(Math.pow(p.T_rad,4)-Math.pow(p.T_sink,4));
+  const A_rad=Q*1000/(2*q), M_rad=A_rad*p.rad_kg_m2, C_rad=A_rad*p.rad_cost_m2/1e6;
+  const M_it=gross*p.it_kg_kW, M_sh=p.shield_t_MW*1000*MW;
+  const M_dry=(M_arr+M_rad+M_it+M_sh+M_batt)*(1+p.struct);
+  return {sell,gross,bus,sunlit,E_batt,M_batt,C_batt,arrBOL,A_arr,M_arr,C_arr,Q,q,A_rad,M_rad,C_rad,M_it,M_sh,M_dry};
+}
+function spaceCapex(p,pt,MW=1){
+  const C_it=pt.gross*1000*p.it_cost_W/1e6;
+  const C_pl=pt.C_arr+pt.C_rad+pt.C_batt+p.avionics_M*MW;
+  const C_l=pt.M_dry*p.launch/1e6, C_int=p.integ_M*MW;
+  const C_ins=p.ins*(C_it+C_pl+C_l);
+  return {C_it,C_pl,C_l,C_int,C_ins,total:C_it+C_pl+C_l+C_int+C_ins};
+}
+function groundCapex(p,MW=1){
+  const C_it=1000*MW*(1+p.g_overprov)*1000*p.it_cost_W/1e6, C_fac=p.g_fac*MW;
+  return {C_it,C_fac,total:C_it+C_fac};
+}
+function crfm(r,n){if(r<=0)return 1/n;const m=r/12,k=12*n;return 12*m*Math.pow(1+m,k)/(Math.pow(1+m,k)-1);}
+function evaluate(p,MW=1,withDelay=false){
+  const pt=physMass(p,MW), cs=spaceCapex(p,pt,MW), cg=groundCapex(p,MW);
+  const kwhS=1000*MW*8760*p.util*(1-p.c_ovh)*p.rad_avail;
+  const kwhG=1000*MW*8760*p.util*(1-p.g_ovh)*p.g_avail;
+  const opS=p.ops_M*MW;
+  const elec=p.g_pue*1000*MW*8760*p.util*p.g_elec/1e3/1e6;
+  const opG=p.g_ops*MW+elec;
+  // CRF levelization, mixed lives (SemiAnalysis convention: monthly annuities)
+  const crfS=crfm(p.wacc_s,p.life), crfGit=crfm(p.wacc_g,p.it_life), crfGfc=crfm(p.wacc_g,p.g_fac_life);
+  const annS=crfS*cs.total+opS, annG=crfGit*cg.C_it+crfGfc*cg.C_fac+opG;
+  const lcS=annS*1e6/kwhS, lcG=annG*1e6/kwhG;
+  // NPV over each side's own horizon at its own WACC; ground facility as 15-yr annuity
+  const npv=(side)=>{
+    const r=side=="s"?p.wacc_s:p.wacc_g;
+    const yrs=Math.round(side=="s"?p.life:p.it_life);
+    const d0=withDelay?(side=="s"?p.s_delay:p.g_delay):0;
+    const cap=side=="s"?cs.total:cg.C_it;
+    const op=side=="s"?opS:(opG+crfGfc*cg.C_fac);
+    const kwh=side=="s"?kwhS:kwhG;
+    let acc=0;
+    for(let i=0;i<yrs;i++){const t=i+0.5+d0;
+      acc+=(kwh*p.rev0*Math.pow(1-p.rev_dec,t)/1e6-op)/Math.pow(1+r,t);}
+    return acc-cap;};
+  const npvS=npv("s"), npvG=npv("g");
+  const A=cs.C_it+cs.C_pl+cs.C_int+p.ins*(cs.C_it+cs.C_pl);
+  const targetCap=(lcG*kwhS/1e6-opS)/crfS;
+  const Lbe=(targetCap-A)*1e6/(pt.M_dry*(1+p.ins));
+  const elecLife=elec*((1-Math.pow(1+p.wacc_g,-p.life))/p.wacc_g); // display: life-horizon PV
+  const KWGPU=30.5/16;
+  const gpuS=lcS*p.util*KWGPU, gpuG=lcG*p.util*KWGPU;  // SA wall-clock convention
+  return {pt,cs,cg,lcS,lcG,ratio:lcS/lcG,npvS,npvG,Lbe,kwhS,elecLife,gpuS,gpuG};
+}
+
+/* ============ Controls ============ */
+const GROUPS=[
+ ["Launch & platform",[
+  ["launch","Launch price","$/kg",50,6000,10,"log","F9 actual ’26 ≈ $1.4–1.8k (SemiAnalysis) · Starship ~$250 envisioned"],
+  ["integ_M","Integration & NRE","$M/MW",1,25,0.5],
+  ["ins","Insurance","% of hw+launch",0,0.15,0.005,"pct"],
+  ["struct","Structure/ADCS/prop","% of subsystem mass",0.08,0.30,0.01,"pct"],
+  ["avionics_M","Avionics & optical comms","$M/MW",1,15,0.5],
+ ]],
+ ["Orbit & storage",[
+  ["ecl_min","Eclipse per day","min",0,40,1,null,"Dawn‑dusk SSO sees up to ~35 min/day in season (SemiAnalysis)"],
+  ["batt_whkg","Battery specific energy","Wh/kg pack",100,350,5],
+  ["batt_kwh_cost","Battery cost","$/kWh installed",80,800,10],
+  ["batt_dod","Usable depth of discharge","%",0.5,0.95,0.05,"pct"],
+ ]],
+ ["Power",[
+  ["sp_array","Array specific power","W/kg BOL",50,500,5,null,"ROSA-class ≈ 100 · thin-film blanket target 300+"],
+  ["array_cost_W","Array cost","$/W BOL",2,100,1],
+  ["cell_eff","Cell efficiency","",0.24,0.40,0.005,"pct"],
+  ["degr","Degradation","%/yr",0.005,0.04,0.0025,"pct"],
+  ["overhead","Bus overhead (pumps, comms)","% of IT",0.03,0.15,0.005,"pct"],
+ ]],
+ ["Thermal",[
+  ["T_rad","Radiating temperature","K",285,350,2.5,null,"Liquid cold plates allow 45–60 °C → 318–333 K"],
+  ["T_sink","Effective sink","K",200,260,5],
+  ["rad_kg_m2","Radiator areal density","kg/m² panel",1.5,12,0.25,null,"ISS-era ≈ 15–25 · target ≤ 2.5"],
+  ["rad_cost_m2","Radiator cost","$/m²",300,6000,100],
+ ]],
+ ["IT & reliability",[
+  ["it_kg_kW","IT specific mass","kg/kW",6,25,0.5,null,"GB200 NVL72 ≈ 11 bare"],
+  ["it_cost_W","IT capex (both sides)","$/W",15,50,1],
+  ["overprov","Overprovision (no repair)","%",0.03,0.30,0.01,"pct"],
+  ["c_ovh","Checkpoint/SEU overhead","%",0,0.12,0.005,"pct"],
+  ["rad_avail","Radiation availability","%",0.88,1.0,0.005,"pct","SemiAnalysis: 95% net of solar-event downtime"],
+  ["shield_t_MW","Spot shielding","t/MW",0,5,0.25],
+  ["life","Station life","yr",3,12,0.5,null,"SemiAnalysis: 5 yr now → 10 yr post-2032 via in-space robotics"],
+ ]],
+ ["Economics",[
+  ["rev0","Compute price, year 0","$/kW‑h",0.8,5,0.1],
+  ["rev_dec","Price erosion","%/yr",0.05,0.30,0.01,"pct"],
+  ["util","Utilisation","%",0.6,1.0,0.02,"pct"],
+  ["wacc_s","WACC · space","%",0.08,0.18,0.0025,"pct","SemiAnalysis: 15% today, de-risks to 10.3%"],
+  ["wacc_g","WACC · ground","%",0.07,0.14,0.0025,"pct"],
+  ["ops_M","Space ops","$M/MW/yr",0.2,3,0.1],
+ ]],
+ ["Terrestrial benchmark",[
+  ["g_fac","Facility capex","$M/MW",6,25,0.5,null,"Grid $12–15 · crypto-conv $10–15 · BTM $15–20 · industrial >$20 (SA layers)"],
+  ["g_fac_life","Facility life","yr",8,20,1,null,"15-yr building vs 5-yr station — SA's biggest single driver"],
+  ["g_elec","Electricity","$/MWh",40,250,5],
+  ["g_pue","PUE",">1",1.05,1.6,0.01],
+  ["g_ops","Ground ops","$M/MW/yr",0.3,3,0.1],
+  ["g_delay","Interconnect queue","yr",0,6,0.25,null,"Used only in scarcity mode"],
+ ]],
+];
+const ctlHost=document.getElementById("controls");
+const sliders={};
+GROUPS.forEach(([g,items],gi)=>{
+  const d=document.createElement("details"); if(gi<2)d.open=true;
+  d.innerHTML=`<summary>${g}</summary>`;
+  items.forEach(([key,lab,unit,min,max,step,kind,note])=>{
+    const isLog = kind==="log";
+    const div=document.createElement("div"); div.className="ctl";
+    div.innerHTML=`<div class="row"><b>${lab}</b><span class="v" id="v_${key}"></span></div>
+      <input type="range" id="s_${key}" min="${isLog?Math.log10(min):min}" max="${isLog?Math.log10(max):max}" step="${isLog?0.01:step}" aria-label="${lab} ${unit}">
+      ${note?`<div class="note">${note}</div>`:`<div class="note">${unit}</div>`}`;
+    d.appendChild(div);
+    const el=div.querySelector("input");
+    sliders[key]={el,isLog,kind,unit};
+    el.addEventListener("input",()=>{
+      p[key]= isLog? Math.pow(10,parseFloat(el.value)) : parseFloat(el.value);
+      setCustom(); refresh();
+    });
+  });
+  ctlHost.appendChild(d);
+});
+function syncSliders(){
+  for(const k in sliders){const s=sliders[k];
+    s.el.value = s.isLog? Math.log10(p[k]) : p[k];
+    document.getElementById("v_"+k).textContent = fmtVal(k,p[k]);}
+  document.getElementById("gdel").textContent=p.g_delay.toFixed(1);
+  document.getElementById("sdel").textContent=p.s_delay.toFixed(1);
+}
+function fmtVal(k,v){
+  const s=sliders[k];
+  if(s.kind==="pct")return (v*100).toFixed(v<0.02?1:1)+"%";
+  if(k==="launch")return "$"+Math.round(v).toLocaleString();
+  if(k==="rad_cost_m2")return "$"+Math.round(v).toLocaleString();
+  if(v>=100)return Math.round(v).toLocaleString();
+  return (Math.round(v*100)/100).toString();
+}
+function setCustom(){
+  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
+  const cc=document.getElementById("customChip");
+  cc.disabled=false; cc.style.opacity=1; cc.style.cursor="pointer"; cc.classList.add("active");
+}
+document.querySelectorAll(".chip[data-sc]").forEach(ch=>{
+  ch.addEventListener("click",()=>{
+    const i=parseInt(ch.dataset.sc); if(i<0)return;
+    p={...PRESETS[i]};
+    document.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
+    ch.classList.add("active");
+    syncSliders(); refresh();
+  });
+});
+document.getElementById("scarcity").addEventListener("change",refresh);
+document.getElementById("gwTarget").addEventListener("input",refresh);
+
+/* ============ Charts ============ */
+Chart.defaults.font.family="'IBM Plex Mono',monospace";
+Chart.defaults.font.size=10.5;
+Chart.defaults.color="#66605C";
+Chart.defaults.animation=false;
+const gridCol="#E5DCD2";
+
+const chCurve=new Chart(document.getElementById("chCurve"),{type:"line",
+ data:{datasets:[
+  {label:"Space LCOC",data:[],borderColor:"#0D7680",borderWidth:2.4,pointRadius:0,tension:.25},
+  {label:"Ground benchmark",data:[],borderColor:"#66605C",borderDash:[5,4],borderWidth:1.6,pointRadius:0},
+  {label:"Your launch price",data:[],borderColor:"#990F3D",backgroundColor:"#990F3D",pointRadius:5,pointStyle:"circle",showLine:false},
+ ]},
+ options:{maintainAspectRatio:false,
+  scales:{x:{type:"logarithmic",min:50,max:6000,grid:{color:gridCol},title:{display:true,text:"launch price $/kg (log)"},
+            ticks:{callback:v=>[50,100,200,500,1000,2000,4000].includes(v)?"$"+v:""}},
+          y:{min:0,grid:{color:gridCol},title:{display:true,text:"$ per IT-kW-hour"}}},
+  plugins:{legend:{labels:{boxWidth:14,boxHeight:2}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${c.parsed.y.toFixed(2)}/kWh @ $${Math.round(c.parsed.x)}/kg`}}}}});
+
+const capexLabels=["IT hardware","Platform hw","Launch","Integration","Insurance","Facility","Electricity (life, disc.)"];
+const capexCols=["#0F5499","#0D7680","#990F3D","#9A6A28","#66605C","#CDA46F","#E3B98F"];
+const chCapex=new Chart(document.getElementById("chCapex"),{type:"bar",
+ data:{labels:["Space","Ground"],datasets:capexLabels.map((l,i)=>({label:l,data:[0,0],backgroundColor:capexCols[i],stack:"s"}))},
+ options:{maintainAspectRatio:false,indexAxis:"y",
+  scales:{x:{stacked:true,grid:{color:gridCol},title:{display:true,text:"$M per MW IT"}},y:{stacked:true,grid:{display:false}}},
+  plugins:{legend:{labels:{boxWidth:12,boxHeight:8,font:{size:9.5}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${c.parsed.x.toFixed(0)}M`}}}}});
+
+const massLabels=["Solar array","Radiators","IT hardware","Battery","Shielding","Structure/ADCS"];
+const massCols=["#0D7680","#990F3D","#0F5499","#E3B98F","#9A6A28","#CDC4B9"];
+const chMass=new Chart(document.getElementById("chMass"),{type:"bar",
+ data:{labels:["t / MW"],datasets:massLabels.map((l,i)=>({label:l,data:[0],backgroundColor:massCols[i],stack:"m"}))},
+ options:{maintainAspectRatio:false,indexAxis:"y",
+  scales:{x:{stacked:true,grid:{color:gridCol},title:{display:true,text:"tonnes per MW IT"}},y:{stacked:true,grid:{display:false}}},
+  plugins:{legend:{labels:{boxWidth:12,boxHeight:8,font:{size:9.5}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.x.toFixed(1)} t`}}}}});
+
+const chTorn=new Chart(document.getElementById("chTorn"),{type:"bar",
+ data:{labels:[],datasets:[{label:"ratio range",data:[],backgroundColor:"#990F3D",borderSkipped:false}]},
+ options:{maintainAspectRatio:false,indexAxis:"y",
+  scales:{x:{grid:{color:gridCol},title:{display:true,text:"space / ground LCOC ratio"}},y:{grid:{display:false},ticks:{font:{size:10},autoSkip:false}}},
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed._custom?c.parsed._custom.start.toFixed(2):""} → ${c.parsed.x.toFixed(2)}`}},
+   annotationLines:{}},
+ },
+ plugins:[{id:"tornadoLines",afterDraw(ch){
+   const {ctx,chartArea,scales}=ch; if(!ch.$base)return;
+   const draw=(x,col,dash,lab)=>{const px=scales.x.getPixelForValue(x);
+     if(px<chartArea.left||px>chartArea.right)return;
+     ctx.save();ctx.strokeStyle=col;ctx.setLineDash(dash);ctx.lineWidth=1.3;
+     ctx.beginPath();ctx.moveTo(px,chartArea.top);ctx.lineTo(px,chartArea.bottom);ctx.stroke();
+     ctx.fillStyle=col;ctx.font="10px 'IBM Plex Mono'";ctx.fillText(lab,px+3,chartArea.top+10);ctx.restore();};
+   draw(1.0,"#0D7680",[4,3],"parity");
+   draw(ch.$base,"#26211C",[],"base");
+ }}]});
+
+/* ============ Station SVG ============ */
+function drawStation(pt){
+  const svg=document.getElementById("stationSvg");
+  // Geometry: two solar wings (aspect 4:1 each) + 4 radiator panels (aspect 3:1) + core
+  const wingA=pt.A_arr/2, wingW=Math.sqrt(wingA/4), wingL=4*wingW;       // m
+  const radA=pt.A_rad/4, radW=Math.sqrt(radA/3), radL=3*radW;
+  const span=2*wingL+14, vspan=Math.max(2*radL+14, 68, wingW*2);
+  const scale=Math.min(720/Math.max(span,110), 270/Math.max(vspan,80));
+  const cx=380, cy=150, S=v=>v*scale;
+  const pitchW=S(105), pitchH=S(68);
+  const e=[];
+  e.push(`<rect x="${cx-pitchW/2}" y="${cy-pitchH/2}" width="${pitchW}" height="${pitchH}" fill="none" stroke="#66605C" stroke-width="1.4" stroke-dasharray="5 4"/>`);
+  e.push(`<line x1="${cx}" y1="${cy-pitchH/2}" x2="${cx}" y2="${cy+pitchH/2}" stroke="#66605C" stroke-width=".7" stroke-dasharray="3 4" opacity=".6"/>`);
+  // radiator cross (vertical, claret hatch)
+  for(const s of[-1,1]){
+    const y0 = s<0? cy-7-S(radL) : cy+7;
+    for(const o of[-1,1]){
+      const x0 = cx + (o<0? -4-S(radW) : 4);
+      e.push(`<rect x="${x0}" y="${y0}" width="${S(radW)}" height="${S(radL)}" fill="#990F3D" opacity=".82" stroke="#26211C" stroke-width="1"/>`);
+      for(let k=1;k<4;k++)e.push(`<line x1="${x0}" y1="${y0+S(radL)*k/4}" x2="${x0+S(radW)}" y2="${y0+S(radL)*k/4}" stroke="#FFF1E5" stroke-width=".8" opacity=".7"/>`);
+    }
+  }
+  // solar wings (horizontal, teal with cell grid)
+  for(const s of[-1,1]){
+    const x0 = s<0? cx-7-S(wingL) : cx+7;
+    const y0 = cy-S(wingW)/2;
+    e.push(`<rect x="${x0}" y="${y0}" width="${S(wingL)}" height="${S(wingW)}" fill="#0D7680" stroke="#26211C" stroke-width="1.2"/>`);
+    const n=Math.max(4,Math.round(wingL/12));
+    for(let k=1;k<n;k++)e.push(`<line x1="${x0+S(wingL)*k/n}" y1="${y0}" x2="${x0+S(wingL)*k/n}" y2="${y0+S(wingW)}" stroke="#FFF1E5" stroke-width=".7" opacity=".55"/>`);
+    e.push(`<line x1="${x0}" y1="${cy}" x2="${x0+S(wingL)}" y2="${cy}" stroke="#FFF1E5" stroke-width=".7" opacity=".55"/>`);
+  }
+  // core
+  e.push(`<rect x="${cx-6}" y="${cy-6}" width="12" height="12" fill="#26211C"/>`);
+  // span dimension line
+  const sx=cx-S(span)/2, ex=cx+S(span)/2, dy=cy+Math.max(pitchH/2,S(radL)+12)+18;
+  e.push(`<line x1="${sx}" y1="${dy}" x2="${ex}" y2="${dy}" stroke="#26211C" stroke-width="1"/>`);
+  e.push(`<line x1="${sx}" y1="${dy-4}" x2="${sx}" y2="${dy+4}" stroke="#26211C" stroke-width="1"/>`);
+  e.push(`<line x1="${ex}" y1="${dy-4}" x2="${ex}" y2="${dy+4}" stroke="#26211C" stroke-width="1"/>`);
+  e.push(`<text x="${cx}" y="${dy+14}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#26211C">tip-to-tip span ≈ ${Math.round(span)} m</text>`);
+  svg.innerHTML=e.join("");
+  document.getElementById("lArr").textContent=` ${Math.round(pt.A_arr).toLocaleString()} m²`;
+  document.getElementById("lRad").textContent=` ${Math.round(pt.A_rad).toLocaleString()} m² (2-sided)`;
+}
+
+/* ============ Refresh ============ */
+const $=id=>document.getElementById(id);
+const f1=v=>v.toFixed(1), f2=v=>v.toFixed(2), fM=v=>"$"+Math.round(v)+"M";
+function refresh(){
+  for(const k in sliders)document.getElementById("v_"+k).textContent=fmtVal(k,p[k]);
+  const withDelay=$("scarcity").checked;
+  const r=evaluate(p,1,withDelay);
+
+  $("kMass").textContent=f1(r.pt.M_dry/1e3);
+  $("kCapS").textContent=fM(r.cs.total);
+  $("kCapG").textContent=fM(r.cg.total);
+  $("kLcS").textContent="$"+f2(r.lcS);
+  $("kLcG").textContent="$"+f2(r.lcG);
+  $("kGpu").textContent="$"+f2(r.gpuS)+" / $"+f2(r.gpuG);
+  $("kNpvS").textContent=(r.npvS>=0?"+":"−")+"$"+Math.abs(r.npvS).toFixed(0)+"M";
+  $("kNpvS").style.color=r.npvS>=0?"var(--teal)":"var(--claret)";
+  $("kNpvG").textContent=(r.npvG>=0?"+":"−")+"$"+Math.abs(r.npvG).toFixed(0)+"M";
+  $("kNpvG").style.color=r.npvG>=0?"var(--teal)":"var(--claret)";
+  if(r.Lbe>0){$("kBE").textContent="$"+Math.round(r.Lbe).toLocaleString();$("kBEsub").textContent="$ / kg to SSO";}
+  else{$("kBE").textContent="—";$("kBEsub").textContent="platform-bound: free launch can't reach parity";}
+
+  $("vRatio").textContent=f2(r.ratio)+"×";
+  const tag=$("vTag"), vt=$("vText");
+  if(r.ratio<0.95){tag.textContent="SPACE WINS";tag.style.background="var(--teal)";
+    vt.textContent="At these assumptions orbital compute undercuts the terrestrial benchmark per kW-hour — and the scarcity toggle widens the gap further.";}
+  else if(r.ratio<=1.12){tag.textContent="AT PARITY";tag.style.background="var(--wheat)";
+    vt.textContent="Space and ground are within ~10% per kW-hour. Site-specific power prices, queues and sovereignty now decide.";}
+  else{tag.textContent="GROUND WINS";tag.style.background="var(--claret)";
+    vt.textContent=r.Lbe>0?
+     `Orbit costs ${f2(r.ratio)}× ground. Launch below ~$${Math.round(r.Lbe).toLocaleString()}/kg would close the gap at current platform assumptions.`:
+     `Orbit costs ${f2(r.ratio)}× ground — and no launch price fixes it: the space-rated platform alone exceeds a ground build plus its electricity. The frontier is array $/W, radiator kg/m² and integration cost, not the rocket.`;}
+  $("vRatio").style.color=r.ratio<0.95?"var(--teal)":(r.ratio<=1.12?"var(--wheat)":"var(--claret)");
+
+  // curve
+  const pts=[],N=70;
+  for(let i=0;i<=N;i++){const L=Math.pow(10,Math.log10(50)+(Math.log10(6000)-Math.log10(50))*i/N);
+    pts.push({x:L,y:evaluate({...p,launch:L},1,false).lcS});}
+  chCurve.data.datasets[0].data=pts;
+  chCurve.data.datasets[1].data=[{x:50,y:r.lcG},{x:6000,y:r.lcG}];
+  chCurve.data.datasets[2].data=[{x:p.launch,y:r.lcS}];
+  chCurve.options.scales.y.max=Math.max(3,Math.ceil(Math.max(pts[N].y,r.lcG)*1.15));
+  chCurve.update();
+  $("beNote").innerHTML = r.Lbe>0
+    ? `Breakeven where teal meets dashed: <b>$${Math.round(r.Lbe).toLocaleString()}/kg</b>. Falcon 9 actual ≈ $1,400–1,800 (SemiAnalysis) · Starship envisioned ~$250.`
+    : `<b>No crossing.</b> Even at $50/kg the teal curve sits above the benchmark — platform hardware is the binding constraint at these settings.`;
+
+  // capex
+  const elecLife=r.elecLife;
+  const sp=[r.cs.C_it,r.cs.C_pl,r.cs.C_l,r.cs.C_int,r.cs.C_ins,0,0];
+  const gd=[r.cg.C_it,0,0,0,0,r.cg.C_fac,elecLife];
+  chCapex.data.datasets.forEach((d,i)=>{d.data=[sp[i],gd[i]];});
+  chCapex.update();
+
+  // mass
+  const mvals=[r.pt.M_arr,r.pt.M_rad,r.pt.M_it,r.pt.M_batt,r.pt.M_sh,r.pt.M_dry-(r.pt.M_arr+r.pt.M_rad+r.pt.M_it+r.pt.M_batt+r.pt.M_sh)].map(v=>v/1e3);
+  chMass.data.datasets.forEach((d,i)=>{d.data=[mvals[i]];});
+  chMass.update();
+
+  // tornado
+  const sweeps=[
+   ["Launch $/kg","launch",p.launch*0.5,p.launch*2],
+   ["Array $/W","array_cost_W",Math.max(2,p.array_cost_W*0.5),p.array_cost_W*2],
+   ["IT $/W","it_cost_W",p.it_cost_W*0.8,p.it_cost_W*1.2],
+   ["Grid $/MWh","g_elec",p.g_elec*0.6,p.g_elec*1.7],
+   ["IT kg/kW","it_kg_kW",p.it_kg_kW*0.7,p.it_kg_kW*1.3],
+   ["Array W/kg","sp_array",p.sp_array*0.7,p.sp_array*1.6],
+   ["Radiator kg/m²","rad_kg_m2",Math.max(1.5,p.rad_kg_m2*0.6),p.rad_kg_m2*1.5],
+   ["T_rad K","T_rad",Math.max(290,p.T_rad-15),Math.min(350,p.T_rad+15)],
+   ["Integration $M","integ_M",p.integ_M*0.5,p.integ_M*1.8],
+   ["WACC space","wacc_s",Math.max(0.08,p.wacc_s-0.03),Math.min(0.18,p.wacc_s+0.03)],
+   ["Station life yr","life",Math.max(3,p.life-2),Math.min(12,p.life+3)],
+  ];
+  const rows=sweeps.map(([lab,k,lo,hi])=>{
+    const a=evaluate({...p,[k]:lo},1,false).ratio, b=evaluate({...p,[k]:hi},1,false).ratio;
+    return {lab,lo:Math.min(a,b),hi:Math.max(a,b)};
+  }).sort((a,b)=>(b.hi-b.lo)-(a.hi-a.lo));
+  chTorn.data.labels=rows.map(x=>x.lab);
+  chTorn.data.datasets[0].data=rows.map(x=>[x.lo,x.hi]);
+  chTorn.data.datasets[0].backgroundColor=rows.map(x=>(x.hi-x.lo)>0.18?"#990F3D":"#0D7680");
+  chTorn.$base=r.ratio;
+  const span=Math.max(...rows.map(x=>x.hi));
+  chTorn.options.scales.x.min=Math.max(0,Math.min(0.9,...rows.map(x=>x.lo))-0.1);
+  chTorn.options.scales.x.max=span+0.15;
+  chTorn.update();
+
+  // scale-up
+  const gw=Math.max(0.1,parseFloat($("gwTarget").value)||5);
+  const ptg=physMass(p,gw*1000);
+  $("suMass").textContent=Math.round(ptg.M_dry/1e3).toLocaleString();
+  $("suFlights").textContent=Math.round(ptg.M_dry/1e3/150).toLocaleString();
+  $("suRepl").textContent=Math.round(ptg.M_dry/1e3/150/p.life).toLocaleString();
+  $("suArea").textContent=(ptg.A_arr/1e6).toFixed(1);
+
+  drawStation(r.pt);
+}
+syncSliders(); refresh();
+</script>
+</body>
+</html>

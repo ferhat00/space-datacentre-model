@@ -4,6 +4,56 @@ A coupled **power → thermal → mass → launch → capex → LCOC/NPV** syste
 orbital AI data centre (1 MW sellable IT, ~550 km dusk-dawn sun-synchronous orbit),
 benchmarked against a terrestrial data centre running identical silicon.
 
+## v3 (modular package, in progress)
+
+`v3` generalises the single-file v2 into a literature-grounded modular package, `odc/`,
+backed by a 24-agent review of 130 sources (academic citation counts checked on Semantic
+Scholar; 12 load-bearing numbers adversarially verified). The v2 physics/finance are
+ported **unchanged** into `odc/core.py`, so the SemiAnalysis 2026 reproduction (`SA26`)
+still calibrates within ~2% — guarded by `tests/test_regression.py` (22 tests).
+
+| Module | Adds |
+|---|---|
+| `odc/core.py` | v2 physics + finance (calibrated), with verified-correction provenance comments |
+| `odc/scenarios.py` | TODAY / EARLY / MATURE / SA26 **+ OPTIMIST / SKEPTIC** literature brackets |
+| `odc/workloads.py` | training / batch / latency / embeddings taxonomy + Turyshev comms-intensity **Γ gate** (training + batch are the orbital-revenue workloads) |
+| `odc/hardware.py` | GPU/accelerator matrix (Jetson → H100 → B300 → GB300 NVL72 → Trillium TPU) |
+| `odc/sizes.py` | six-rung spacecraft × GPU **size ladder** (ESPA edge node → GW constellation) with anchored masses |
+| `odc/orbits.py` | DDSS / equatorial LEO / high LEO / MEO / GEO — eclipse, dose, latency, drag, FCC |
+| `odc/comms.py` | ISL + downlink capacity/availability + Γ feasibility |
+| `odc/ground_energy.py` | terrestrial energy comparator (grid/gas/SMR/solar+storage/geothermal/fuel-cell) — space competes on **time-to-power**, not $/MWh |
+| `odc/finance.py` | WACC trajectory, non-financeable 20% case, self-insurance, scarcity NPV |
+| `odc/provenance.py` | every default carries source + citation strength + verification verdict |
+
+```bash
+python -m odc.presets       # full v3 summary: eras, brackets, size ladder, orbits, Γ gate
+python -m odc.scenarios     # calibrated table + SA26 reproduction + brackets
+python -m pytest tests/     # 22 tests incl. the SA26 calibration guard
+python build_notebook.py    # rebuild & execute notebooks/orbital_datacentre_viability.ipynb (v3, 18 sections)
+```
+
+The **notebook is regenerated from the package** (`build_notebook.py` now imports `odc`
+rather than embedding source) — 18 sections including the literature brackets, the
+workload Γ gate, the size ladder, orbit families, the ground-energy comparator, and the
+provenance/citation ledger, alongside the original headline table, SA calibration,
+launch curves, mass/capex anatomy, tornado, viability map, and a provenance-weighted
+Monte Carlo.
+
+The interactive **dashboard is regenerated from the package** too: `build_dashboard.py`
+exports presets (a direct `asdict` dump), the slider schema, and all v3 data to one JSON
+baked into the HTML; the JavaScript keeps **only the arithmetic** and **self-checks against
+Python-computed golden results on load** (a parity badge — currently 0.000% drift across
+all 6 presets, which retires the old hand-sync risk). It adds era/orbit/size/workload chip
+rows, the Γ-gate chart, the size-ladder table, and the ground-energy scatter.
+
+```bash
+python build_dashboard.py   # writes dashboard/*.html (CDN + offline standalone) from odc
+```
+
+---
+
+## v2 (single-file model)
+
 **v2 (12 Jun 2026)** is recalibrated against the SemiAnalysis *AI Space Datacenter
 TCO Model* introduction — *"To Boldly Go: The Case for Space Datacenters"*
 (Nishball, Myana, Holbrook et al., 3 Jun 2026) — and carries a preset that

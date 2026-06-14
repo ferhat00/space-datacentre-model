@@ -29,14 +29,28 @@ from .core import (
     crf, power_thermal_mass, space_capex, ground_capex,
     annual_compute_kWh, lcoc_and_npv,
 )
-from .scenarios import TODAY, EARLY, MATURE, SA26, SCENARIOS, SA_ANCHORS
+from .model import ODCModel, Spacecraft
+from .results import (
+    PowerThermalMass, SpaceCapex, GroundCapex, SAUnits, LCOCResult,
+)
+from .scenarios import (
+    TODAY, EARLY, MATURE, SA26, OPTIMIST, SKEPTIC,
+    SCENARIOS, BRACKETS, SA_ANCHORS,
+)
 
 __all__ = [
+    # parameters + kernel
     "P", "SIGMA", "SOLAR_CONST",
     "B300_KW_PER_GPU", "B300_PFLOPS_FP4", "B300_TOKS_PER_S",
-    "crf", "power_thermal_mass", "space_capex", "ground_capex",
+    "crf", "ODCModel", "Spacecraft",
+    # functional API (backward-compatible shims)
+    "power_thermal_mass", "space_capex", "ground_capex",
     "annual_compute_kWh", "lcoc_and_npv",
-    "TODAY", "EARLY", "MATURE", "SA26", "SCENARIOS", "SA_ANCHORS",
+    # typed result objects
+    "PowerThermalMass", "SpaceCapex", "GroundCapex", "SAUnits", "LCOCResult",
+    # scenarios
+    "TODAY", "EARLY", "MATURE", "SA26", "OPTIMIST", "SKEPTIC",
+    "SCENARIOS", "BRACKETS", "SA_ANCHORS",
 ]
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"

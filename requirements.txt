@@ -5,3 +5,6 @@ nbformat
 nbclient
 ipykernel
 pytest
+# Streamlit app (additive front-end; see streamlit_app/). Run: streamlit run app.py
+streamlit
+plotly

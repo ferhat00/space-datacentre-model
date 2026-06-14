@@ -52,6 +52,46 @@ python build_dashboard.py   # writes dashboard/*.html (CDN + offline standalone)
 
 ---
 
+## v3.1 — object-oriented kernel + Streamlit app + literature review
+
+**Object-oriented kernel.** The calibrated physics/finance now lives in an `ODCModel`
+class (`odc/model.py`); the parameter record `P`, the constants and `crf` moved there too.
+The arithmetic is a *verbatim* port of the v2 functions (identical float operations in the
+same order), so SA26 still reproduces the SemiAnalysis anchors within ~2% and the dashboard
+parity badge stays at 0.000% drift. `odc/core.py` is now a thin backward-compatible shim:
+the old free functions (`power_thermal_mass`, `lcoc_and_npv`, ...) still work and return
+typed, **dict-compatible** result objects (`odc/results.py`), so `r["lcoc_s"]` and
+`r.lcoc_s` are equivalent and every existing consumer keeps working unchanged.
+
+```python
+from odc import ODCModel, SA26
+from odc.orbits import EQUATORIAL_LEO
+from odc.sizes import STATION_16MW
+
+r = ODCModel.from_scenario(SA26).with_orbit(EQUATORIAL_LEO).with_size(STATION_16MW).evaluate()
+print(r.lcoc_s, r.ratio, r.pt.M_dry)        # attribute access; r["lcoc_s"] also works
+```
+
+**Streamlit app** (`app.py` + `streamlit_app/`). A 7-tab cockpit that tweaks every
+parameter live: **Methods** (the modelling approaches *and* physical sub-models, each
+runnable), **Parameters** (the ~37 sliders), **Results**, **Sensitivity & Monte Carlo**,
+**Size & orbits**, **Workloads & energy**, **Provenance**. It is additive — it shares the
+`odc` package and the slider schema (`odc/schema.py`, now also used by `build_dashboard.py`)
+with the Chart.js dashboard, which is untouched.
+
+```bash
+pip install -e .[app]        # or: pip install -r requirements.txt
+streamlit run app.py
+```
+
+**Literature review** (`docs/MODELING_METHODS.md`). A web-backed, adversarially-verified
+survey of the modelling methods (LCOC/TCO, Γ-ceiling, orbital-edge-computing, Monte Carlo,
+parametric CERs, sensitivity, break-even, physics sizing), balancing the ambitious
+GW-constellation case against the skeptical/realistic one. Regenerate from the saved
+research data with `python scripts/build_methods_doc.py`.
+
+---
+
 ## v2 (single-file model)
 
 **v2 (12 Jun 2026)** is recalibrated against the SemiAnalysis *AI Space Datacenter

@@ -81,8 +81,21 @@ OPTIMIST = replace(MATURE, name="Optimist-central (Starcloud/Suncatcher)",
     launch_kg=100,              # Forethought cost-parity / Suncatcher <=$200 mid-2030s
     wacc_space=0.103)
 
+# SPACEX_2027: SpaceX's own June-2026 vendor-stated roadmap, dated to its public
+# "~1 GW/yr by end-2027" target. NOT a calibrated era — a clearly-attributed bull case.
+# Honest tension: SpaceX's headline 70 kW/ton (=14.3 kg/kW WHOLE-sat) is LIGHTER than
+# this model's optimist subsystem sum (array+radiator+battery+IT+structure), and the
+# 2027 date is vendor-stated only — Musk said "grain of salt"; the binding S-1 commits
+# to "as early as 2028" and warns orbital compute "may not achieve commercial viability."
+SPACEX_2027 = replace(OPTIMIST, name="SpaceX roadmap (~2027, vendor-stated)",
+    launch_kg=150,          # Starship at scale (SpaceX thesis; cf. Suncatcher <=$200/kg target)
+    it_kg_per_kW=9,         # AI1 mass-aggressive end (70 kW/ton whole-sat ~ optimist floor)
+    life_yr=5,              # SpaceX S-1 ~5-yr hardware life + FCC 5-yr deorbit (HURTS economics)
+    deploy_delay_yr=0.5,    # near-term: prototypes early 2027
+    wacc_space=0.103)       # bull: financeable on SpaceX balance sheet (skeptic case = 0.20)
+
 SCENARIOS = [TODAY, EARLY, MATURE]
-BRACKETS = [OPTIMIST, SKEPTIC]
+BRACKETS = [OPTIMIST, SKEPTIC, SPACEX_2027]
 
 # SemiAnalysis published anchors (2026, B300 30.5 kW cluster) for validation.
 # VERIFIED (claim sa-gpu-hr-anchors, confirmed): these are the LCOC figures

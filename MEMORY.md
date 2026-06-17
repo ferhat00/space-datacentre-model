@@ -45,3 +45,28 @@ The literature search flagged that a literal SemiAnalysis read keeps utilization
 divisor — a defensible deviation, logged here so it is not mistaken for a SA-confirmed convention.
 **What was rejected:** Changing the divisor convention (would break the calibration and is out
 of scope for this task).
+
+## 2026-06-17, SpaceX AI1 / million-sat roadmap: treat as deliberate skepticism, not a re-baseline
+**What was decided:** After the Jun-2026 SpaceX AI1 unveiling (120 kW avg / 150 kW peak per sat,
+~70 m wingspan, ~110 m^2 liquid radiator, ~600 km LEO) and the "1 GW/yr by end-2027 / ~100 GW/yr by
+2030 / up to 1M sats" roadmap, make TWO scoped changes only: (1) fix the self-contradictory
+`CONSTELLATION_1GW.launch_class` string ("~3,300 launches/yr (~10 t/MW)" was ~12-25x too high and
+implied 3 t/Starship) → "~130-280 Starship launches/GW (30-50 AI1 sats/flight)" — display string,
+no compute impact; (2) add a clearly-attributed `SPACEX_2027` case to **BRACKETS** (not the
+calibrated era ladder), built on OPTIMIST with SpaceX's own anchors (launch_kg=150, it_kg_per_kW=9,
+life_yr=5 per S-1/FCC, wacc_space=0.103). It lands at **LCOC 1.24x / breakeven -$190/kg / NPV -$4M**
+— i.e. still above parity and NPV-negative, the gap vs OPTIMIST (0.78x) driven mainly by SpaceX's
+own stated 5-yr hardware life.
+**Why:** Adversarial multi-source verification (8-agent workflow) found the aggressive 2027/2030/1M
+numbers are from Musk's promo video + the FCC authorization request, NOT the binding S-1 (which says
+deploy "as early as 2028" and "may not achieve commercial viability"; Musk: "grain of salt").
+Per-sat mass is unpublished (70 kW/ton ⇒ ~2.14 t ceiling vs independent teardown ~6.2 t). No anchor
+customer exists for ORBITAL compute (Google $920M/mo and Anthropic $1.25B/mo are both terrestrial).
+The skeptic case (thermal, bisection bandwidth, launch cadence, financing) is reinforced, not
+weakened. So the "parity is a 2035-2040 proposition" thesis stands; the SpaceX roadmap is encoded as
+a labelled vendor-stated bull case, deliberately NOT adopted into the calibrated eras. CLAUDE.md §3.
+**What was rejected:** (a) Re-baselining eras/narrative to SpaceX's 2027/2030 dates or loosening the
+orbital WACC (verification showed the bull timeline is marketing tied to the IPO). (b) Bracketing the
+"2035-2040" narrative text and (c) adding a ~100 GW size-ladder rung — both offered, not selected by
+Ferhat this round; left as open follow-ups. (d) Changing `anchor_mass_t` (10 t/MW) on the
+constellation rung despite AI1 implying ~17 t/MW — flagged, not silently altered.

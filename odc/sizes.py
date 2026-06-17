@@ -81,7 +81,7 @@ STATION_16MW = SizeClass("e", "Assembled station", 16.0, B300, 150.0, "Single St
 
 # (f) GW constellation — the end-state.
 CONSTELLATION_1GW = SizeClass("f", "GW constellation", 1000.0, GB300_NVL72, 10000.0,
-    "~3,300 Starship launches/yr (~10 t/MW)",
+    "~130-280 Starship launches/GW (30-50 AI1 sats/flight)",
     "Frontier training at scale + bulk inference (subject to Gamma/bisection limits)",
     "ASCEND (1 GW by 2050); Starcloud 5 GW on ~16 km^2 array; Suncatcher (scalable)")
 
